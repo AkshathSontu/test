@@ -1,0 +1,58 @@
+# DO NOT CHANGE THIS FILE!
+#
+# This is run on a non-standard gitlab runner so any changes you make may break in unexpected ways.
+# If you feel for some reason this file MUST be changed, please post on the course forum so it can
+# be discussed between you and course staff.
+#
+image: cs2511docker/cs2511-gradle-8.8-ass2:147771a
+
+stages:
+  - lint
+  - tests
+  - dryrun
+
+lint:
+  stage: lint
+  needs: []
+  only:
+    - main
+    - merge_requests
+  script:
+    - gradle lint
+  allow_failure: true
+
+test:
+  stage: tests
+  needs: []
+  only:
+    - main
+    - merge_requests
+  script:
+    - gradle compile
+    - echo "Running your tests"
+    - gradle test
+    - gradle coverage
+    - echo "Successfully passed your own tests, now running dryrun build"
+    - rm -rf app/src/test/
+    - tar -xvf /data/assignment-ii-tests.tar -C app/src/
+    - gradle compile
+
+dryrun-tests:
+  stage: dryrun
+  needs: []
+  only:
+    - main
+    - merge_requests
+  when: manual
+  allow_failure: true
+  script:
+    - rm -rf app/src/test/
+    - tar -xvf /data/assignment-ii-tests.tar -C app/src/
+    - echo "You should expect the tasks you did not complete to fail"
+    - gradle compile
+    - echo "This CI job will always pass, but you should check the output to see if your code passes the dryrun tests"
+    - echo "Checking if your code passes the dryrun tests"
+    - gradle test || true
+  after_script:
+    - echo "You should expect the tasks you did not complete to fail"
+    - echo "This CI job will always pass, but you should check the output to see if your code passes the dryrun tests"
